@@ -1,19 +1,16 @@
 import express from "express";
-import fetch from "node-fetch";
 
 const app = express();
-app.use(express.json({ limit: "5mb" }));
+app.use(express.json());
 
 app.get("/", (_req, res) => {
-  res.send("Lucrécia bridge ok");
+  res.type("text/plain").send("Lucrécia bridge ok");
 });
 
-// endpoint do webhook do Telegram (placeholder)
-app.post(`/telegram/:token`, (req, res) => {
-  // só pra confirmar que o Render aceita o POST do Telegram
-  // (depois pluga seu handleUpdate aqui)
+app.post("/telegram/:token", (_req, res) => {
+  // placeholder: só confirma que a rota existe
   res.sendStatus(200);
 });
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3000; // Render injeta PORT
 app.listen(PORT, () => console.log(`ON :${PORT}`));
