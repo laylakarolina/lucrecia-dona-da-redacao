@@ -1,5 +1,14 @@
 import express from "express";
 import axios from "axios";
+import path from "path";
+import { fileURLToPath } from "url";
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// rota para o builder importar
+app.get("/openapi.json", (req, res) => {
+  res.type("application/json").sendFile(path.join(__dirname, "openapi.json"));
+});
 
 const app = express();
 app.use(express.json());
@@ -68,3 +77,4 @@ const HOST = "0.0.0.0";
 app.listen(PORT, HOST, () => {
   console.log(`✅ Lucrécia ON em http://${HOST}:${PORT}`);
 });
+
