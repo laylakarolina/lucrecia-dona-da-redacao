@@ -2,79 +2,88 @@ import express from "express";
 import axios from "axios";
 import path from "path";
 import { fileURLToPath } from "url";
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// rota para o builder importar
-app.get("/openapi.json", (req, res) => {
-  res.type("application/json").sendFile(path.join(__dirname, "openapi.json"));
-});
-
+// ====== APP ======
 const app = express();
-app.use(express.json());
+app.use(express.json({ limit: "5mb" }));
 
-// CONFIGURAÇÕES
-const TOKEN = "8076749353:AAFQd0A1YD1xUKfD0BCA1b6CV3r-fhiRTXo"; // <-- teu token
-const EDIT_GROUP_ID = "-4813891159"; // grupo B
-const PUBLIC_CHANNEL_ID = "-100xxxxxxxxxx"; // depois me passa o canal
+// ====== CONFIG (use .env no Render) ======
+const TOKEN = process.env.TELEGRAM_TOKEN || "SEU_TOKEN_AQUI";
+const EDIT_GROUP_ID = process.env.EDIT_GROUP_ID || "-4813891159";
+const PUBLIC_CHANNEL_ID = process.env.PUBLIC_CHANNEL_ID || "-100xxxxxxxxxx";
 const TELEGRAM_API = `https://api.telegram.org/bot${TOKEN}`;
 
-// ROTA PRINCIPAL
+// ====== ROTAS BÁSICAS ======
 app.get("/", (_req, res) => {
   res.type("text/plain").send("Lucrécia bridge ok");
 });
 
-// ROTA DE TESTE DE SAÚDE
 app.get("/health", (_req, res) => res.send("ok"));
 
-// ROTA DE RECEBIMENTO DO TELEGRAM
+// OpenAPI para Actions do GPT (servindo arquivo local openapi.json)
+app.get("/openapi.json", (req, res) => {
+  res.type("application/json").sendFile(path.join(__dirname, "openapi.json"));
+});
+
+// ====== WEBHOOK DO TELEGRAM ======
 app.post(`/telegram/${TOKEN}`, async (req, res) => {
   try {
-    const msg = req.body.message;
-    if (!msg || !msg.text) return res.sendStatus(200);
+    const body = req.body || {};
+
+    // Pode vir message, edited_message ou callback_query
+    const msg = body.message || body.edited_message || body?.callback_query?.message;
+    const text = body.message?.text || body.edited_message?.text || body?.callback_query?.data;
+
+    if (!msg || !text) {
+      return res.sendStatus(200); // sempre 200 pro Telegram
+    }
 
     const chatId = msg.chat.id;
-    const text = msg.text.trim();
+    const t = text.trim();
 
-    console.log("📩 Mensagem recebida:", text);
-
-    // responde /start
-    if (text === "/start") {
+    // /start
+    if (t === "/start") {
       await sendMessage(chatId, "Lucrécia online e pronta para trabalhar!");
+      return res.sendStatus(200);
     }
 
-    // responde /pacotao
-    else if (text.startsWith("/pacotao")) {
-      const conteudo = text.replace("/pacotao", "").trim() || "(vazio)";
+    // /pacotao <tema>
+    if (t.startsWith("/pacotao")) {
+      const conteudo = t.replace("/pacotao", "").trim() || "(vazio)";
       await sendMessage(
         chatId,
-        `📦 Pacotão recebido!\n\nConteúdo: ${conteudo}\n\n(Lucrécia ainda está em modo de teste 🧠)`
+        `📦 Pacotão recebido!\n\nConteúdo: ${conteudo}\n\n(Lucrécia ainda em modo de teste 🧠)`
       );
+      return res.sendStatus(200);
     }
 
-    res.sendStatus(200);
+    // default
+    await sendMessage(chatId, "Comando não reconhecido. Use /pacotao <tema>.");
+    return res.sendStatus(200);
   } catch (err) {
-    console.error("❌ Erro ao processar mensagem:", err.message);
-    res.sendStatus(500);
+    console.error("❌ Erro ao processar webhook:", err.response?.data || err.message);
+    return res.sendStatus(200); // Telegram não curte 500
   }
 });
 
-// Função para enviar mensagens
+// ====== UTIL ======
 async function sendMessage(chatId, text) {
   try {
     await axios.post(`${TELEGRAM_API}/sendMessage`, {
       chat_id: chatId,
       text,
-    });
+    }, { timeout: 15000 });
   } catch (err) {
     console.error("Erro ao enviar mensagem:", err.response?.data || err.message);
   }
 }
 
-// LIGA O SERVIDOR
+// ====== START ======
 const PORT = process.env.PORT || 3000;
 const HOST = "0.0.0.0";
 app.listen(PORT, HOST, () => {
   console.log(`✅ Lucrécia ON em http://${HOST}:${PORT}`);
 });
-
