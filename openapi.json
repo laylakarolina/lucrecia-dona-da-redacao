@@ -1,0 +1,86 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Lucrécia Dona da Redação — API",
+    "version": "1.0.0",
+    "description": "Endpoints usados pelo GPT para gerar pacotão, aprovar/editar e publicar no Telegram."
+  },
+  "servers": [
+    { "url": "https://lucrecia-dona-da-redacao.onrender.com" }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "summary": "Health check",
+        "operationId": "health",
+        "responses": { "200": { "description": "OK" } }
+      }
+    },
+    "/pacotao": {
+      "post": {
+        "summary": "Gera o pacotão editorial completo",
+        "operationId": "generatePacotao",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "tema": { "type": "string" },
+                  "tom": { "type": "string" },
+                  "rede": { "type": "string" }
+                },
+                "required": ["tema"]
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Pacotão gerado" } }
+      }
+    },
+    "/aprovar": {
+      "post": {
+        "summary": "Aprova e publica no canal",
+        "operationId": "approveAndPublish",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "conteudo": { "type": "string" }
+                },
+                "required": ["conteudo"]
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Publicado" } }
+      }
+    },
+    "/editar": {
+      "post": {
+        "summary": "Pede nova versão do texto",
+        "operationId": "requestEdit",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "conteudo": { "type": "string" },
+                  "instrucoes": { "type": "string" }
+                },
+                "required": ["conteudo", "instrucoes"]
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Texto refeito" } }
+      }
+    }
+  }
+}
