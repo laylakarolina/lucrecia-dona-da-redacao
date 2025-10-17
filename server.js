@@ -1,6 +1,5 @@
 // server.js
 import express from "express";
-import fetch from "node-fetch";
 import crypto from "crypto";
 import fs from "fs";
 import path from "path";
@@ -258,3 +257,4 @@ app.post(`/telegram/${TOKEN}`, async (req, res) => {
 // ==== START ====
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, "0.0.0.0", () => console.log(`✅ Lucrécia ON em http://0.0.0.0:${PORT}`));
+
